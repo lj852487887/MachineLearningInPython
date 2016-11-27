@@ -38,10 +38,49 @@ def fileToMatrix(filename):
         index+=1
     return returnMat,classLabelVector
 
+def autoNorm(dataSet):
+    minVals = dataSet.min(0)
+    maxVals = dataSet.max(0)
+    ranges = maxVals - minVals
+    normedDataSet = zeros(shape(dataSet))
+    m = dataSet.shape[0]
+    normedDataSet = dataSet - tile(minVals,(m,1))
+    normedDataSet = normedDataSet/tile(ranges,(m,1))
+    return normedDataSet,ranges,minVals
 
-if __name__ == '__main__':
+def datingClassTest():
+    sampleRatio = 0.1
+    datingDataMat,datingLabels = fileToMatrix("datingTestSet2.txt")
+    normMat,ranges,minVals = autoNorm(datingDataMat)
+    m = normMat.shape[0]
+    numTestVec = int(m*sampleRatio)
+    errorCount = 0.0
+    for i in range(numTestVec):
+        classifierResult = kNNClassif(normMat[i,:],normMat[numTestVec:m,:],datingLabels[numTestVec:m],3)
+        print "the classifier came back with: %d, the real answer is: %d" % (classifierResult,datingLabels[i])
+        if(classifierResult != datingLabels[i]): errorCount+=1.0
+    print "the total error rate is %f" % (errorCount/float(numTestVec))
+
+def plotDataSet():
     datingDataMat,datingLabels = fileToMatrix('datingTestSet2.txt')
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.scatter(datingDataMat[:,1],datingDataMat[:,2])
+    ax.scatter(datingDataMat[:,0],datingDataMat[:,1],15.0*array(datingLabels),15.0*array(datingLabels))
     plt.show()
+
+def classifyPerson():
+    resultList = ['not at all','in small doess','in large doess']
+    percentTats = float(raw_input("percentage of time spent playing games?"))
+    ffMiles = float(raw_input("flier miles earned per year?"))
+    iceCream = float(raw_input("ice cream comsumed per year?"))
+    datingDataMat,datingLabels = fileToMatrix("datingTestSet2.txt")
+    normMat,ranges,minVals = autoNorm(datingDataMat)
+    inArr = array([percentTats,ffMiles,iceCream])
+    classifierResult = kNNClassif((inArr-minVals)/ranges,normMat,datingLabels,3)
+    print "you will probably like this person: ",resultList[classifierResult]
+
+
+if __name__ == '__main__':
+    #plotDataSet()
+    #datingClassTest()
+    classifyPerson()
